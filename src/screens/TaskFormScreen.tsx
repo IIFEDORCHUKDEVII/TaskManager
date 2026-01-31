@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -13,16 +13,24 @@ import { RootStackParamList } from '../navigation/AppNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAddTaskMutation } from '../features/tasks/tasksApi';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import RNDateTimePicker from '@react-native-community/datetimepicker';
+import RNDateTimePicker, {
+  DateTimePickerAndroid,
+} from '@react-native-community/datetimepicker';
 import PriorityMenu from '../components/PriorityMenu';
-import { PriorityTask } from '../features/tasks/types';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
+import { PriorityTask } from '../features/tasks/types';
 type TaskFormNavProp = NativeStackNavigationProp<
   RootStackParamList,
   'TaskForm'
 >;
 
-const INITIAL_DATE = new Date(1598051730000);
+const INITIAL_DATE = new Date();
+const priorityOrderMap = {
+  low: 1,
+  medium: 2,
+  high: 3,
+};
 
 const TaskFormScreen: React.FC = () => {
   const navigation = useNavigation<TaskFormNavProp>();
@@ -41,8 +49,11 @@ const TaskFormScreen: React.FC = () => {
 
   const handleDateTimeChange = useCallback(
     (_event: any, selectedDate?: Date) => {
+      const currentDate = selectedDate;
       setShow(false);
-      if (selectedDate) setDate(selectedDate);
+      console.log(_event, currentDate);
+
+      if (currentDate) setDate(currentDate);
     },
     [],
   );
@@ -50,6 +61,7 @@ const TaskFormScreen: React.FC = () => {
   const handleShowMode = useCallback(
     (currentMode: 'date' | 'time') => {
       setMode(currentMode);
+
       setShow(!switchStates[currentMode]);
     },
     [switchStates],
@@ -69,6 +81,17 @@ const TaskFormScreen: React.FC = () => {
     setSwitchStates(prev => ({ ...prev, time: !prev.time }));
     handleShowMode('time');
   }, [handleShowMode]);
+  useEffect(() => {
+    if (show)
+      DateTimePickerAndroid.open({
+        minimumDate: INITIAL_DATE,
+        value: date,
+        onChange: handleDateTimeChange,
+        mode: mode,
+        is24Hour: true,
+      });
+    return () => {};
+  }, [show]);
 
   const handleSave = useCallback(() => {
     addTask({
@@ -76,7 +99,7 @@ const TaskFormScreen: React.FC = () => {
       title,
       description,
       completed: false,
-      priority,
+      priority: priorityOrderMap[priority],
       deadline: date.toISOString(),
       createdAt: Date.now(),
       category: 'cat123',
@@ -85,22 +108,10 @@ const TaskFormScreen: React.FC = () => {
     navigation.goBack();
   }, [addTask, title, description, priority, date, navigation]);
 
-  const renderDatePicker = () =>
-    show && (
-      <RNDateTimePicker
-        minimumDate={new Date()}
-        testID="dateTimePicker"
-        value={date}
-        mode={mode}
-        onChange={handleDateTimeChange}
-      />
-    );
-
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.headerText}>Details</Text>
       <View style={styles.flexContainer}>
-        {renderDatePicker()}
         <View style={styles.formBlock}>
           <View style={styles.inputBlock}>
             <TextInput
@@ -162,7 +173,6 @@ const TaskFormScreen: React.FC = () => {
             </View>
           </View>
         </View>
-        {renderDatePicker()}
         <View>
           <TouchableOpacity style={styles.btn} onPress={handleSave}>
             <Text style={[styles.titleInput, { color: '#fff' }]}>

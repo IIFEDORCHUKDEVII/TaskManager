@@ -5,9 +5,16 @@ export interface Task {
   title: string;
   description?: string;
   completed: boolean;
-  priority: PriorityTask;
+  priority: number;
   category?: string;
   createdAt: number; // number для Redux
   updatedAt: number;
   deadline: string; // 🔥 number
 }
+
+export type TaskSort =
+  | 'updatedAt_desc'
+  | 'updatedAt_asc'
+  | 'deadline_asc'
+  | 'priority_desc'
+  | 'completed_asc';

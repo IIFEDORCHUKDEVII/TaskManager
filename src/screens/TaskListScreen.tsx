@@ -7,25 +7,39 @@ import {
   View,
   StyleSheet,
 } from 'react-native';
-import { useDeleteTaskMutation, useLazyLoadMoreTasksQuery, useRealtimeTasksQuery } from '../features/tasks/tasksApi';
+import {
+  useDeleteTaskMutation,
+  useLazyLoadMoreTasksQuery,
+  useRealtimeTasksQuery,
+} from '../features/tasks/tasksApi';
 import TaskItem from '../components/TaskItem';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Task } from '../features/tasks/types';
+import { Task, TaskSort } from '../features/tasks/types';
+import SearchSettingPanel from '../components/SearchSettingPanel';
+import SortMenu from '../components/SortMenu';
 
 const PAGE_SIZE = 10;
 
-type TaskListNavProp = NativeStackNavigationProp<RootStackParamList, 'TaskList'>;
+type TaskListNavProp = NativeStackNavigationProp<
+  RootStackParamList,
+  'TaskList'
+>;
 
 export const TaskListScreen: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [cursor, setCursor] = useState<number | null>(null);
   const [hasMore, setHasMore] = useState(true);
+  const [sort, setSort] = useState<string>('updatedAt_desc');
 
-  const { data: realtimeData } = useRealtimeTasksQuery({ pageSize: PAGE_SIZE });
-  const [loadMoreTasks, { data: moreData, isFetching }] = useLazyLoadMoreTasksQuery();
+  const { data: realtimeData } = useRealtimeTasksQuery({
+    pageSize: PAGE_SIZE,
+    sort: sort as TaskSort,
+  });
+  const [loadMoreTasks, { data: moreData, isFetching }] =
+    useLazyLoadMoreTasksQuery();
   const [deleteTask] = useDeleteTaskMutation();
   const navigation = useNavigation<TaskListNavProp>();
 
@@ -54,7 +68,7 @@ export const TaskListScreen: React.FC = () => {
 
   const handleTaskDelete = useCallback(
     (id: string) => deleteTask(id),
-    [deleteTask]
+    [deleteTask],
   );
 
   const handleNavigateToTaskForm = useCallback(() => {
@@ -65,7 +79,7 @@ export const TaskListScreen: React.FC = () => {
     ({ item }: { item: Task }) => (
       <TaskItem task={item} onDelete={() => handleTaskDelete(item.id)} />
     ),
-    [handleTaskDelete]
+    [handleTaskDelete],
   );
 
   const renderFAB = () => (
@@ -77,6 +91,8 @@ export const TaskListScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.innerContainer}>
+        <SearchSettingPanel setSort={setSort}/>
+       
         <FlatList
           showsVerticalScrollIndicator={false}
           data={tasks}
@@ -84,7 +100,9 @@ export const TaskListScreen: React.FC = () => {
           renderItem={renderTaskItem}
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.2}
-          ListEmptyComponent={isFetching ? <ActivityIndicator size="large" /> : null}
+          ListEmptyComponent={
+            isFetching ? <ActivityIndicator size="large" /> : null
+          }
         />
         {renderFAB()}
       </View>

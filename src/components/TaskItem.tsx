@@ -5,6 +5,12 @@ interface TaskItemProps {
   task: Task;
   onDelete: (id: string) => void;
 }
+
+const priorityOrderMap: Record<number, string> = {
+  1: 'Low',
+  2: 'Medium',
+  3: 'High',
+};
 const TaskItem = ({ task, onDelete }: TaskItemProps) => {
   return (
     <View
@@ -17,7 +23,7 @@ const TaskItem = ({ task, onDelete }: TaskItemProps) => {
     >
       <Text>{task.title}</Text>
       <Text>{task.description}</Text>
-      <Text>{task.priority}</Text>
+      <Text>{priorityOrderMap[task.priority]}</Text>
       <Text>{task.completed}</Text>
       <Text>{task.deadline}</Text>
     </View>

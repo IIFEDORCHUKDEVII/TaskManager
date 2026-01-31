@@ -73,5 +73,5 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
-android\app\google-services.json
-src\services\firebase.ts
+android/app/google-services.json
+src/services/firebase.ts

@@ -15,27 +15,30 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db } from '../../services/firebase';
-import { Task } from './types';
+import { Task, TaskSort } from './types';
 import { loadTasksLocal, saveTasksLocal } from '../../services/storage';
+import { SORT_CONFIG } from '../../utils/sortConfig';
 export const tasksApi = createApi({
   reducerPath: 'tasksApi',
   baseQuery: fakeBaseQuery(),
   endpoints: builder => ({
     realtimeTasks: builder.query<
       { tasks: Task[]; firstCursor?: number },
-      { pageSize: number }
+      { pageSize: number; sort: TaskSort }
     >({
       queryFn: async () => {
         const cached = await loadTasksLocal();
         return { data: { tasks: cached } };
       },
       async onCacheEntryAdded(
-        { pageSize },
+        { pageSize, sort },
         { updateCachedData, cacheEntryRemoved },
       ) {
+        const { field, direction } = SORT_CONFIG[sort];
+
         const q = query(
           collection(db, 'tasks'),
-          orderBy('updatedAt', 'desc'),
+          orderBy(field, direction),
           limit(pageSize),
         );
 
