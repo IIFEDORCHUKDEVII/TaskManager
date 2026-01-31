@@ -100,14 +100,35 @@ export const tasksApi = createApi({
     }),
     addTask: builder.mutation<void, Task>({
       async queryFn(task) {
-        await addDoc(collection(db, 'tasks'), task);
-        return { data: undefined };
+        try {
+          await addDoc(collection(db, 'tasks'), {
+            ...task,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          });
+
+          return { data: undefined };
+        } catch (e) {
+          return { error: e as any };
+        }
       },
     }),
 
-    updateTask: builder.mutation<void, Partial<Task>>({
-      async queryFn({ id, ...data }) {
-        await updateDoc(doc(db, 'tasks', id!), data);
+    updateTask: builder.mutation<void, { id: string; data: Partial<Task> }>({
+      async queryFn({ id, data }) {
+        if (!id) {
+          return { error: { message: 'Task id is required' } as any };
+        }
+
+        if (!Object.keys(data).length) {
+          return { data: undefined };
+        }
+
+        await updateDoc(doc(db, 'tasks', 'RGPsGLKcpbucdMfuZTpB'), {
+          ...data,
+          updatedAt: Date.now(),
+        });
+
         return { data: undefined };
       },
     }),

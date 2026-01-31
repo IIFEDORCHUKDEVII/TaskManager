@@ -11,6 +11,7 @@ import {
   useDeleteTaskMutation,
   useLazyLoadMoreTasksQuery,
   useRealtimeTasksQuery,
+  useUpdateTaskMutation,
 } from '../features/tasks/tasksApi';
 import TaskItem from '../components/TaskItem';
 import { useNavigation } from '@react-navigation/native';
@@ -33,11 +34,13 @@ export const TaskListScreen: React.FC = () => {
   const [cursor, setCursor] = useState<number | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [sort, setSort] = useState<string>('updatedAt_desc');
-
+  const [updateTask] = useUpdateTaskMutation();
   const { data: realtimeData } = useRealtimeTasksQuery({
     pageSize: PAGE_SIZE,
     sort: sort as TaskSort,
   });
+  console.log(tasks);
+  
   const [loadMoreTasks, { data: moreData, isFetching }] =
     useLazyLoadMoreTasksQuery();
   const [deleteTask] = useDeleteTaskMutation();
@@ -70,6 +73,14 @@ export const TaskListScreen: React.FC = () => {
     (id: string) => deleteTask(id),
     [deleteTask],
   );
+  const handleTaskUpdate = useCallback(
+    (currentTask: Task) => {
+      console.log(currentTask);
+      
+      updateTask({ id: currentTask.id, data: currentTask });
+    },
+    [updateTask],
+  );
 
   const handleNavigateToTaskForm = useCallback(() => {
     navigation.navigate('TaskForm');
@@ -77,7 +88,11 @@ export const TaskListScreen: React.FC = () => {
 
   const renderTaskItem = useCallback(
     ({ item }: { item: Task }) => (
-      <TaskItem task={item} onDelete={() => handleTaskDelete(item.id)} />
+      <TaskItem
+        task={item}
+        onUpdate={handleTaskUpdate}
+        onDelete={() => handleTaskDelete(item.id)}
+      />
     ),
     [handleTaskDelete],
   );
@@ -91,8 +106,8 @@ export const TaskListScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.innerContainer}>
-        <SearchSettingPanel setSort={setSort}/>
-       
+        <SearchSettingPanel setSort={setSort} />
+
         <FlatList
           showsVerticalScrollIndicator={false}
           data={tasks}
