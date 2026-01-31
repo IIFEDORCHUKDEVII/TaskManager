@@ -16,6 +16,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { Task } from './types';
+import { loadTasksLocal, saveTasksLocal } from '../../services/storage';
 export const tasksApi = createApi({
   reducerPath: 'tasksApi',
   baseQuery: fakeBaseQuery(),
@@ -24,7 +25,10 @@ export const tasksApi = createApi({
       { tasks: Task[]; firstCursor?: number },
       { pageSize: number }
     >({
-      queryFn: () => ({ data: { tasks: [] } }),
+      queryFn: async () => {
+        const cached = await loadTasksLocal();
+        return { data: { tasks: cached } };
+      },
       async onCacheEntryAdded(
         { pageSize },
         { updateCachedData, cacheEntryRemoved },
@@ -48,8 +52,8 @@ export const tasksApi = createApi({
               ? tasks[tasks.length - 1].updatedAt // останній елемент
               : undefined,
           }));
+          saveTasksLocal(tasks);
         });
-
         await cacheEntryRemoved;
         unsub();
       },
